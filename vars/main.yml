@@ -1,0 +1,102 @@
+---
+
+roundcube_main_version: "{{ roundcube_version[0:3] }}"
+
+roundcube_delegate_to: localhost
+
+roundcube_local_tmp_directory: "{{
+  lookup('env', 'CUSTOM_LOCAL_TMP_DIRECTORY') |
+  default(lookup('env', 'HOME') ~ '/.cache/ansible/roundcube', true) }}/{{ roundcube_version }}"
+
+roundcube_cache_directory: /var/cache/ansible/roundcube
+roundcube_remote_tmp_directory: "{{ roundcube_cache_directory }}/{{ roundcube_version }}"
+
+roundcube_owner_default: www-data
+
+roundcube_dependencies:
+  - python3-pip
+
+roundcube_python_packages:
+  - name: dirsync
+
+roundcube_packages: []
+
+# ---------------------------------------------------------------------------------------
+
+roundcube_defaults_config:
+  database:
+    dsnw: ""                                        # 'mysql://roundcube:@localhost/roundcubemail';
+    dsnr: ""                                        #
+    dsnw_noread: ""                                 # false
+    persistent: ""                                  # false
+    prefix: ""                                      #
+    table_dsn: {}                                   # { 'cache': 'r', 'cache_index': 'r', 'cache_thread': 'r', 'cache_messages': 'r' }
+    max_allowed_packet: ""                          #
+  logging: {}
+    driver:                                         # 'file' / 'syslog', 'stdout' or 'file'
+    date_format: 'd-M-Y H:i:s O'                    #
+    session_id: 8
+    file_ext: '.log'
+    syslog:
+      id: 'roundcube'
+      facility: 'LOG_USER'
+    per_user_logging: false
+    smtp_log:
+    log_logins: false
+    debug:
+      session: false
+      sql: false
+      imap: false
+      ldap: false
+      smtp: false
+      memcache: false
+      apc: false
+      redis: false
+  imap:
+    host: ""                                        # localhost:143
+    auth_type: ""                                   # DIGEST-MD5, CRAM-MD5, LOGIN, PLAIN or null
+    conn_options: {}
+    #  'ssl'         => [
+    #     'verify_peer'  => true,
+    #     'verify_depth' => 3,
+    #     'cafile'       => '/etc/openssl/certs/ca.crt',
+    #   ],
+    conn_options: ""
+    timeout: 0
+    auth_cid: ""
+    auth_pw: ""
+    delimiter: ""
+    vendor: ""                                      # e.g. 'dovecot', 'cyrus', 'gimap', 'hmail', 'uw-imap'.
+    namespace:
+      personal: ""
+      other: ""
+      shared: ""
+    force_caps: false
+    force_lsub: false
+    force_ns: false
+    skip_hidden_folders: false
+    dual_use_folders: ""
+    disabled_caps: []
+    log_session: false
+    cache: ""                                       # 'db', 'apc' and 'memcache' or 'memcached'.
+    messages_cache: false
+    cache_ttl: 10d
+    cache_threshold: 50
+
+
+
+  smtp: {}
+  oauth: {}
+  ldap: {}
+  caches: {}
+  system: {}
+  plugins: {}
+  ui: {}
+  addressbook: {}
+  user_pref: {}
+
+roundcube_defaults_release:
+  # https://github.com/roundcube/roundcubemail/releases/download/1.6.9/roundcubemail-1.6.9-complete.tar.gz
+  download_url: "https://github.com/roundcube/roundcubemail/releases"
+  file: "roundcubemail-{{ roundcube_version }}-complete.tar.gz"
+  checksum: ""

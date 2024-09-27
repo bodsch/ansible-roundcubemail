@@ -1,0 +1,22 @@
+---
+
+roundcube_version: 1.6.5
+
+roundcube_direct_download: false
+
+roundcube_install_base_directory: /var/www
+
+roundcube_owner: ""
+roundcube_group: ""
+
+roundcube_install_path: /usr/local/opt/roundcube/{{ roundcube_version }}
+
+roundcube_config: {}
+
+roundcube_release: {}
+
+roundcube_php_daemon:
+  restart: true
+  name: "{{ php_fpm_daemon }}"
+
+...

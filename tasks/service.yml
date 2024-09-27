@@ -1,0 +1,13 @@
+---
+
+- name: start and enable service
+  ansible.builtin.service:
+    name: roundcube
+    state: "{{ roundcube_service_state | default('started') }}"
+    enabled: "{{ roundcube_service_enabled | default(true) | bool }}"
+  tags:
+    - configuration
+    - roundcube
+    - roundcube-start-enable-service
+
+...

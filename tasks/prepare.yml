@@ -1,0 +1,125 @@
+---
+
+- name: include OS specific configuration
+  ansible.builtin.include_vars: "{{ lookup('first_found', params) }}"
+  vars:
+    params:
+      paths:
+        - "vars"
+      files:
+        # eg. debian-10 / ubuntu-20 / centos-8 / oraclelinux-8
+        - "{{ ansible_distribution | lower }}-{{ ansible_distribution_major_version }}.yml"
+        # eg. archlinux-systemd / archlinux-openrc
+        - "{{ ansible_distribution | lower }}-{{ ansible_service_mgr | lower }}.yml"
+        # eg. debian / ubuntu / centos / oraclelinux
+        - "{{ ansible_distribution | lower }}.yml"
+        # eg. redhat / debian
+        - "{{ ansible_os_family | lower }}.yml"
+        # artixlinux
+        - "{{ ansible_os_family | lower | replace(' ', '') }}.yml"
+        # artixlinux-openrc
+        - "{{ ansible_distribution | lower | replace(' ', '') }}-{{ ansible_service_mgr | lower }}.yml"
+        - default.yml
+      skip: true
+
+- name: detect docker environment
+  ansible.builtin.set_fact:
+    is_docker_guest: "{{
+      ansible_virtualization_role | default('host') == 'guest' and
+      ansible_virtualization_type | default('none') == 'docker' }}"
+
+- name: install dependencies
+  ansible.builtin.package:
+    name: "{{ roundcube_dependencies }}"
+    state: present
+  when:
+    - roundcube_dependencies | default([]) | count > 0
+
+# - name: get latest system information
+#   ansible.builtin.setup:
+#
+# - name: get version of installed php
+#   bodsch.core.package_version:
+#     package_name: "php"
+#     state: installed
+#   register: package_version
+#
+# - name: define php version
+#   ansible.builtin.set_fact:
+#     php_version: "{{ package_version.available.full_version }}"
+#     php_major_version: "{{ package_version.available.major_version }}"
+#     php_package_version: "{{ package_version.available.version_string_compressed }}"
+#   when:
+#     - package_version is defined
+#     - package_version.available is defined
+#     - package_version.available.full_version is defined
+#     - package_version.available.major_version is defined
+#     - package_version.available.version_string_compressed is defined
+#
+# - name: do facts module to get latest information
+#   ansible.builtin.setup:
+#
+# - name: assert php_version for roundcube {{ roundcube_main_version }} ({{ roundcube_version }})
+#   ansible.builtin.assert:
+#     that:
+#       - php_version is defined
+#       - php_version is version_compare('8.1', '>=')
+#     msg: "This role only works with PHP >= 8.1 .. found: {{ php_version }}"
+#   when:
+#     - roundcube_main_version is version('2', '==', strict=False)
+#
+#
+# - name: user and group handling
+#   when:
+#     - roundcube_virtual_user.name != "root"
+#   block:
+#     - name: create roundcube virtual user group
+#       ansible.builtin.group:
+#         name: "{{ roundcube_virtual_user.name }}"
+#         state: present
+#         system: false
+#         gid: "{{ roundcube_virtual_user.gid }}"
+#
+#     - name: create roundcube virtual user
+#       ansible.builtin.user:
+#         name: "{{ roundcube_virtual_user.name }}"
+#         groups: "{{ roundcube_virtual_user.name }}"
+#         append: true
+#         shell: /usr/sbin/nologin
+#         system: false
+#         uid: "{{ roundcube_virtual_user.uid }}"
+#         createhome: true
+#         home: "{{ roundcube_virtual_user.home }}"
+#
+# - name: gathering facts now
+#   ansible.builtin.setup:
+#
+# - name: merge roundcube configuration between defaults and custom
+#   ansible.builtin.set_fact:
+#     roundcube_config: "{{ roundcube_defaults_config | combine(roundcube_config, recursive=True) }}"
+#     roundcube_auth: "{{ roundcube_defaults_auth | combine(roundcube_auth, recursive=True) }}"
+#     roundcube_director: "{{ roundcube_defaults_director | combine(roundcube_director, recursive=True) }}"
+#     roundcube_logging: "{{ roundcube_defaults_logging | combine(roundcube_logging, recursive=True) }}"
+#     roundcube_mail: "{{ roundcube_defaults_mail | combine(roundcube_mail, recursive=True) }}"
+#     roundcube_master: "{{ roundcube_defaults_master | combine(roundcube_master, recursive=True) }}"
+#     roundcube_ssl: "{{ roundcube_defaults_ssl | combine(roundcube_ssl, recursive=True) }}"
+#     roundcube_tcpwrapper: "{{ roundcube_defaults_tcpwrapper | combine(roundcube_tcpwrapper, recursive=True) }}"
+#     roundcube_lda: "{{ roundcube_defaults_lda | combine(roundcube_lda, recursive=True) }}"
+#     roundcube_mailboxes: "{{ roundcube_defaults_mailboxes | combine(roundcube_mailboxes, recursive=True) }}"
+#     roundcube_imap: "{{ roundcube_defaults_imap | combine(roundcube_imap, recursive=True) }}"
+#     roundcube_lmtp: "{{ roundcube_defaults_lmtp | combine(roundcube_lmtp, recursive=True) }}"
+#     roundcube_managesieve: "{{ roundcube_defaults_managesieve | combine(roundcube_managesieve, recursive=True) }}"
+#     roundcube_pop3: "{{ roundcube_defaults_pop3 | combine(roundcube_pop3, recursive=True) }}"
+#     roundcube_submission: "{{ roundcube_defaults_submission | combine(roundcube_submission, recursive=True) }}"
+#     roundcube_acl: "{{ roundcube_defaults_acl | combine(roundcube_acl, recursive=True) }}"
+#     roundcube_plugin: "{{ roundcube_defaults_plugin | combine(roundcube_plugin, recursive=True) }}"
+#     roundcube_quota: "{{ roundcube_defaults_quota | combine(roundcube_quota, recursive=True) }}"
+#     roundcube_sieve_extprograms: "{{ roundcube_defaults_sieve_extprograms | combine(roundcube_sieve_extprograms, recursive=True) }}"
+#     roundcube_sieve: "{{ roundcube_defaults_sieve | combine(roundcube_sieve, recursive=True) }}"
+#     roundcube_authentications: "{{ roundcube_defaults_authentications | combine(roundcube_authentications, recursive=True) }}"
+#     roundcube_dict_auth: "{{ roundcube_defaults_dict_auth | combine(roundcube_dict_auth, recursive=True) }}"
+#     roundcube_dict_sql: "{{ roundcube_defaults_dict_sql | combine(roundcube_dict_sql, recursive=True) }}"
+#     roundcube_ldap: "{{ roundcube_defaults_ldap | combine(roundcube_ldap, recursive=True) }}"
+#     roundcube_sql: "{{ roundcube_defaults_sql | combine(roundcube_sql, recursive=True) }}"
+
+...

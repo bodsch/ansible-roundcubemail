@@ -1,0 +1,138 @@
+---
+
+- name: get latest release
+  delegate_to: localhost
+  become: false
+  run_once: true
+  when:
+    - roundcube_version == "latest"
+  block:
+    - name: get latest release
+      delegate_to: localhost
+      become: false
+      run_once: true
+      bodsch.scm.github_latest:
+        project: roundcube
+        repository: roundcube
+        user: "{{ lookup('env', 'GH_USER') | default(omit) }}"
+        password: "{{ lookup('env', 'GH_TOKEN') | default(omit) }}"
+      register: _latest_release
+
+    - name: re-define roundcube_version
+      ansible.builtin.set_fact:
+        roundcube_version: "{{ _latest_release.latest_release }}"
+
+- name: define download information
+  ansible.builtin.set_fact:
+    roundcube_release: "{{ roundcube_defaults_release | combine(roundcube_release, recursive=True) }}"
+
+- name: define delegate instance for download handling
+  ansible.builtin.set_fact:
+    roundcube_delegate_to: "{{ ansible_host }}"
+    roundcube_local_tmp_directory: "{{
+        lookup('env', 'CUSTOM_LOCAL_TMP_DIRECTORY') |
+        default('/var/cache/ansible/roundcube', true) }}/{{ roundcube_version }}"
+  when:
+    - roundcube_direct_download
+
+- name: create download directory
+  become: false
+  delegate_to: "{{ roundcube_delegate_to }}"
+  run_once: "{{ 'false' if roundcube_direct_download else 'true' }}"
+  ansible.builtin.file:
+    path: "{{ roundcube_local_tmp_directory }}"
+    state: directory
+    mode: 0750
+
+- name: detect the downloaded roundcube archive
+  become: false
+  delegate_to: "{{ roundcube_delegate_to }}"
+  run_once: "{{ 'false' if roundcube_direct_download else 'true' }}"
+  ansible.builtin.stat:
+    path: "{{ roundcube_local_tmp_directory }}/{{ roundcube_release.file }}"
+  register: stat_roundcube_archive
+
+- name: download
+  when:
+    - stat_roundcube_archive.stat is defined
+    - not stat_roundcube_archive.stat.exists | default('false')
+  block:
+    - name: checksum
+      become: false
+      delegate_to: localhost
+      run_once: true
+      block:
+        - name: get checksum list
+          bodsch.scm.github_checksum:
+            project: roundcube
+            repository: roundcube
+            checksum_file: sha256sums.txt
+            user: "{{ lookup('env', 'GH_USER') | default(omit) }}"
+            password: "{{ lookup('env', 'GH_TOKEN') | default(omit) }}"
+            architecture: "{{ ansible_architecture }}"
+            system: "{{ ansible_facts.system }}"
+            version: "v{{ roundcube_version }}"
+          register: _latest_checksum
+          when:
+            - roundcube_release.checksum | default('') | string | length > 0
+
+        - name: define checksum for {{ system_architecture }} architecture
+          ansible.builtin.set_fact:
+            __roundcube_checksum: "sha256:{{ _latest_checksum.checksum }}"
+          when:
+            - _latest_checksum is defined
+            - _latest_checksum.rc | default('-1') | int == 0
+            - _latest_checksum.checksum | default('') | string | length > 0
+
+    - name: download roundcube binary archive {{ roundcube_release.file }}
+      become: false
+      delegate_to: "{{ roundcube_delegate_to }}"
+      run_once: "{{ 'false' if roundcube_direct_download else 'true' }}"
+      ansible.builtin.get_url:
+        url: "{{ roundcube_release.download_url }}/download/{{ roundcube_version }}/{{ roundcube_release.file }}"
+        dest: "{{ roundcube_local_tmp_directory }}/{{ roundcube_release.file }}"
+        checksum: "{{ __roundcube_checksum | default(omit) }}"
+        validate_certs: false
+        mode: 0640
+      register: _download_archive
+      until: _download_archive is succeeded
+      retries: 5
+      delay: 2
+      check_mode: false
+
+  rescue:
+    - name: delete download directory
+      become: false
+      delegate_to: "{{ roundcube_delegate_to }}"
+      run_once: "{{ 'false' if roundcube_direct_download else 'true' }}"
+      ansible.builtin.file:
+        path: "{{ roundcube_local_tmp_directory }}"
+        state: absent
+
+    - name: exit with fail
+      ansible.builtin.fail:
+        msg: A serious error occurred when downloading the archive.
+
+# - name: detect extracted binary
+#   become: false
+#   delegate_to: "{{ roundcube_delegate_to }}"
+#   run_once: "{{ 'false' if roundcube_direct_download else 'true' }}"
+#   ansible.builtin.stat:
+#     path: "{{ roundcube_local_tmp_directory }}/{{ roundcube_release.binary }}"
+#   register: stat_roundcube_binary
+#
+# - name: extract roundcube archive
+#   become: false
+#   delegate_to: "{{ roundcube_delegate_to }}"
+#   run_once: "{{ 'false' if roundcube_direct_download else 'true' }}"
+#   ansible.builtin.unarchive:
+#     src: "{{ roundcube_local_tmp_directory }}/{{ roundcube_release.file }}"
+#     dest: "{{ roundcube_local_tmp_directory }}/"
+#     copy: false
+#     extra_opts:
+#       - --strip-components=1
+#   when:
+#     - stat_roundcube_binary.stat is defined
+#     - not stat_roundcube_binary.stat.exists | default('false')
+
+...

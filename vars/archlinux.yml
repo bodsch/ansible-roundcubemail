@@ -1,0 +1,8 @@
+---
+
+roundcube_owner_default: http
+
+roundcube_dependencies:
+  - python-pip
+
+...

@@ -1,0 +1,10 @@
+---
+
+- name: restart php-fpm
+  ansible.builtin.service:
+    name: "{{ roundcube_php_daemon.name }}"
+    state: restarted
+  when:
+    - roundcube_php_daemon.restart
+
+...

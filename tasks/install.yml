@@ -1,0 +1,253 @@
+---
+
+- name: define roundcube user
+  ansible.builtin.set_fact:
+    roundcube_owner: "{{ roundcube_owner_default }}"
+  when:
+    - not roundcube_owner is defined or roundcube_owner | length == 0
+
+- name: re-define primary group
+  when:
+    - not roundcube_group is defined or roundcube_group | length == 0
+  block:
+    - name: "find primary group for user '{{ roundcube_owner }}'"
+      ansible.builtin.getent:
+        database: group
+        key: "{{ roundcube_owner }}"
+        split: ':'
+
+    - name: "set roundcube_group '{{ getent_group | list | first }}'"
+      ansible.builtin.set_fact:
+        roundcube_group: "{{ getent_group | list | first }}"
+      when:
+        - getent_group is defined
+
+- name: assert roundcube group
+  ansible.builtin.assert:
+    that:
+      - roundcube_group is defined or roundcube_group | length == 0
+    msg: no roundcube group detected
+    quiet: true
+
+- name: detect installed roundcube
+  ansible.builtin.stat:
+    path: "{{ roundcube_install_base_directory }}/roundcube/{{ roundcube_version }}/installer/index.php"
+    get_checksum: false
+    get_mime: false
+    get_attributes: false
+  register: __stat_present_roundcube
+  changed_when: not __stat_present_roundcube.stat.exists
+
+- name: detect type of {{ roundcube_install_base_directory }}/roundcube/active
+  ansible.builtin.stat:
+    path: "{{ roundcube_install_base_directory }}/roundcube/active"
+    get_checksum: false
+    get_attributes: false
+  register: __stat_share_roundcube
+
+# this should be a link!
+- name: remove directory '{{ roundcube_install_base_directory }}'
+  ansible.builtin.file:
+    state: absent
+    path: "{{ roundcube_install_base_directory }}/roundcube/active"
+  when:
+    - __stat_share_roundcube.stat is defined
+    - __stat_share_roundcube.stat.isdir | default('true')
+
+- name: python support
+  when:
+    - roundcube_python_packages is defined
+    - roundcube_python_packages | count > 0
+  block:
+    - name: create pip requirements file
+      bodsch.core.pip_requirements:
+        name: roundcube
+        requirements: "{{ roundcube_python_packages }}"
+      register: pip_requirements
+
+    - name: fail if pip not installed
+      ansible.builtin.fail:
+        msg: python pip is not installed
+      when:
+        - not pip_requirements.pip.present
+
+    - name: install python packages  # noqa no-handler
+      ansible.builtin.pip:
+        requirements: "{{ pip_requirements.requirements_file }}"
+        state: present
+        extra_args: "{{ roundcube_python_extra_args | default([]) | bodsch.core.python_extra_args(python_version=ansible_python.version) | default(omit) }}"
+      when:
+        - pip_requirements.requirements_file is defined
+        - pip_requirements.changed
+
+    - name: do facts module to get latest information
+      ansible.builtin.setup:
+
+  rescue:
+    - name: remove pip requirements
+      bodsch.core.pip_requirements:
+        name: roundcube
+        requirements: "{{ roundcube_python_packages }}"
+        state: absent
+
+    - name: pip requirements installation failed
+      ansible.builtin.fail:
+        msg: "{{ pip_install.msg }}"
+      when:
+        - pip_install.failed
+
+- name: install roundcube
+  when:
+    - not __stat_present_roundcube.stat.exists
+  block:
+    - name: create remote temp directory
+      ansible.builtin.file:
+        path: "{{ roundcube_remote_tmp_directory }}"
+        state: directory
+        mode: "0755"
+      when:
+        - not roundcube_direct_download
+
+    - name: deploy application archiv
+      ansible.builtin.copy:
+        src: "{{ roundcube_local_tmp_directory }}/{{ roundcube_release.file }}"
+        dest: "{{ roundcube_remote_tmp_directory }}/"
+        mode: "0700"
+
+    - name: create remote install directory
+      ansible.builtin.file:
+        state: directory
+        path: "{{ roundcube_install_base_directory }}/roundcube/{{ roundcube_version }}"
+        owner: "{{ roundcube_owner }}"
+        group: "{{ roundcube_group }}"
+        mode: "0755"
+
+    - name: create remote config directory
+      ansible.builtin.file:
+        state: directory
+        path: "{{ roundcube_install_base_directory }}/roundcube/config"
+        owner: "{{ roundcube_owner }}"
+        group: "{{ roundcube_group }}"
+        mode: "0775"
+
+    - name: extract roundcube archive
+      ansible.builtin.unarchive:
+        src: "{{ roundcube_remote_tmp_directory }}/{{ roundcube_release.file }}"
+        dest: "{{ roundcube_install_base_directory }}/roundcube/{{ roundcube_version }}/"
+        owner: "{{ roundcube_owner }}"
+        group: "{{ roundcube_owner }}"
+        mode: "0755"
+        remote_src: true
+        extra_opts:
+          - --strip-components=1
+      notify:
+        - restart php-fpm
+
+  rescue:
+    - name: remove installation directory
+      ansible.builtin.file:
+        state: absent
+        path: "{{ roundcube_install_base_directory }}/roundcube/{{ roundcube_version }}"
+      no_log: true
+
+    - name: remove link to installation directory
+      ansible.builtin.file:
+        state: absent
+        path: "{{ roundcube_install_base_directory }}/roundcube/active"
+
+    - name: remove remote cchecksum file
+      ansible.builtin.file:
+        state: absent
+        path: "/var/cache/ansible/roundcube/facts.checksum"
+
+    - name: exit with fail
+      ansible.builtin.fail:
+        msg:
+          - "Error while installing of roundcube!"
+          - "{{ rc_status.msg }}"
+
+- name: detect type of roundcube config
+  ansible.builtin.stat:
+    dest: "{{ roundcube_install_base_directory }}/roundcube/{{ roundcube_version }}/config"
+    get_checksum: false
+    get_attributes: false
+  register: __stat_roundcube_config
+
+- name: link the roundcube configuration outside the installation directory
+  when:
+    - __stat_roundcube_config.stat.exists
+    - __stat_roundcube_config.stat.isdir | default('true')
+  block:
+    - name: config handler
+      when:
+        - __stat_roundcube_config.stat.exists
+        - __stat_roundcube_config.stat.isdir | default('true')
+      block:
+        - name: rename default config directory
+          ansible.builtin.command: >
+            mv
+              "{{ roundcube_install_base_directory }}/roundcube/{{ roundcube_version }}/config"
+              "{{ roundcube_install_base_directory }}/roundcube/{{ roundcube_version }}/config_DIST"
+          args:
+            removes: "{{ roundcube_install_base_directory }}/roundcube/{{ roundcube_version }}/config"
+            creates: "{{ roundcube_install_base_directory }}/roundcube/{{ roundcube_version }}/config_DIST"
+
+        - name: create link to {{ roundcube_install_base_directory }}/roundcube/config
+          ansible.builtin.file:
+            src: "{{ roundcube_install_base_directory }}/roundcube/config"
+            dest: "{{ roundcube_install_base_directory }}/roundcube/{{ roundcube_version }}/config"
+            owner: "{{ roundcube_owner }}"
+            group: "{{ roundcube_group }}"
+            mode: "0755"
+            state: link
+            force: true
+
+    - name: detect roundcube defaults.inc.php
+      ansible.builtin.stat:
+        dest: "{{ roundcube_install_base_directory }}/roundcube/config/defaults.inc.php"
+        get_checksum: false
+        get_attributes: false
+      register: __stat_roundcube_config_json
+
+    - name: syncronize config for first run
+      bodsch.core.sync_directory:
+        source_directory: "{{ roundcube_install_base_directory }}/roundcube/{{ roundcube_version }}/config_DIST"
+        destination_directory: "{{ roundcube_install_base_directory }}/roundcube/config"
+        arguments:
+          verbose: true
+          purge: false
+      when:
+        - __stat_roundcube_config_json.stat.exists is defined
+        - not __stat_roundcube_config_json.stat.exists
+
+- name: enable config write
+  ansible.builtin.file:
+    # state: directory
+    mode: "0775"
+    owner: "{{ roundcube_owner }}"
+    group: "{{ roundcube_group }}"
+    path: "{{ roundcube_install_base_directory }}/roundcube/config"
+    recurse: true
+
+- name: create link for roundcube-version {{ roundcube_version }} to {{ roundcube_install_base_directory }}/roundcube/active
+  ansible.builtin.file:
+    src: '{{ roundcube_install_base_directory }}/roundcube/{{ roundcube_version }}'
+    dest: '{{ roundcube_install_base_directory }}/roundcube/active'
+    owner: "{{ roundcube_owner }}"
+    group: "{{ roundcube_group }}"
+    mode: "0775"
+    state: link
+    force: true
+  notify:
+    - restart php-fpm
+
+- name: flush handlers
+  ansible.builtin.meta: flush_handlers
+
+- name: create custom fact file
+  bodsch.core.facts:
+    name: roundcube
+    facts:
+      version: "{{ roundcube_version }}"
+
+...
