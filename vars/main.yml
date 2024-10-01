@@ -32,7 +32,7 @@ roundcube_defaults_config:
     prefix: ""                                      #
     table_dsn: {}                                   # { 'cache': 'r', 'cache_index': 'r', 'cache_thread': 'r', 'cache_messages': 'r' }
     max_allowed_packet: ""                          #
-  logging: {}
+  logging:
     driver:                                         # 'file' / 'syslog', 'stdout' or 'file'
     date_format: 'd-M-Y H:i:s O'                    #
     session_id: 8
@@ -82,8 +82,6 @@ roundcube_defaults_config:
     messages_cache: false
     cache_ttl: 10d
     cache_threshold: 50
-
-
 
   smtp: {}
   oauth: {}

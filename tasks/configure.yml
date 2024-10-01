@@ -1,5 +1,20 @@
 ---
 
+- name: re-read setup
+  setup:
 
+- name: merge roundcube configuration between defaults and custom
+  ansible.builtin.set_fact:
+    roundcube_config: "{{ roundcube_defaults_config | combine(roundcube_config, recursive=True) }}"
+
+- name: write roundcube config
+  roundcube_config:
+    config: "{{ roundcube_config }}"
+    config_path: "{{ roundcube_install_base_directory }}/roundcube/config"
+  register: _config_result
+
+- name: result
+  debug:
+    msg: "{{ _config_result }}"
 
 ...
