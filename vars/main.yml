@@ -33,15 +33,15 @@ roundcube_defaults_config:
     table_dsn: {}                                   # { 'cache': 'r', 'cache_index': 'r', 'cache_thread': 'r', 'cache_messages': 'r' }
     max_allowed_packet: ""                          #
   logging:
-    driver:                                         # 'file' / 'syslog', 'stdout' or 'file'
+    driver: "stdout"                                # 'file' / 'syslog', 'stdout' or 'file'
     date_format: 'd-M-Y H:i:s O'                    #
-    session_id: 8
+    session_id: 8                                   # 8
     file_ext: '.log'
-    syslog:
-      id: 'roundcube'
-      facility: 'LOG_USER'
+    syslog: {}
+      # id: 'roundcube'
+      # facility: 'LOG_USER'
     per_user_logging: false
-    smtp_log:
+    smtp_log: true
     log_logins: false
     debug:
       session: false
@@ -55,13 +55,18 @@ roundcube_defaults_config:
   imap:
     host: ""                                        # localhost:143
     auth_type: ""                                   # DIGEST-MD5, CRAM-MD5, LOGIN, PLAIN or null
-    conn_options: {}
+    conn_options:
+      ssl:
+        verify_peer: true
+        verify_depth: 3
+        cafile: /etc/openssl/certs/ca.crt
+
     #  'ssl'         => [
     #     'verify_peer'  => true,
     #     'verify_depth' => 3,
     #     'cafile'       => '/etc/openssl/certs/ca.crt',
     #   ],
-    conn_options: ""
+    # conn_options: ""
     timeout: 0
     auth_cid: ""
     auth_pw: ""
@@ -80,10 +85,33 @@ roundcube_defaults_config:
     log_session: false
     cache: ""                                       # 'db', 'apc' and 'memcache' or 'memcached'.
     messages_cache: false
+    messages_cache_ttl: ""
     cache_ttl: 10d
     cache_threshold: 50
 
-  smtp: {}
+  smtp:
+    host: 'localhost:587'
+    user: '%u'
+    pass: '%p'
+    auth_type:  null
+    auth_cid:  null
+    auth_pw:  null
+    xclient_login:  false
+    xclient_addr:  false
+    helo_host:  ''
+    timeout:  0
+    conn_options: []
+     #      'ssl' => [
+     #          'verify_peer'  => true,
+     #          'verify_depth' => 3,
+     #          'cafile'       => '/etc/openssl/certs/ca.crt',
+     #      ],
+     #  ]
+    conn_options:  null
+
+
+
+
   oauth: {}
   ldap: {}
   caches: {}
