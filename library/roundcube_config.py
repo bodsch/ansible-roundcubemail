@@ -228,22 +228,95 @@ class RoundcubeConfig(object):
             smtp = config_data.get("smtp", None)
 
             if smtp:
-                pass
+                if smtp.get("host", None):
+                    data['smtp_host'] = smtp.get("host", None)
+                if smtp.get("user", None):
+                    data['smtp_user'] = smtp.get("user", None)
+                if smtp.get("pass", None):
+                    data['smtp_pass'] = smtp.get("pass", None)
+                if smtp.get("auth_type", None) and smtp.get("auth_type") in ['DIGEST-MD5', 'CRAM-MD5', 'LOGIN', 'PLAIN']:
+                    data['smtp_auth_type'] = smtp.get("auth_type")
+                if smtp.get("auth_cid", None):
+                    data['smtp_auth_cid'] = smtp.get("auth_cid", None)
+                if smtp.get("auth_pw", None):
+                    data['smtp_auth_pw'] = smtp.get("auth_pw", None)
+                if smtp.get("xclient_login", None):
+                    data['smtp_xclient_login'] = smtp.get("xclient_login", None)
+                if smtp.get("xclient_addr", None):
+                    data['smtp_xclient_addr'] = smtp.get("xclient_addr", None)
+                if smtp.get("helo_host", None):
+                    data['smtp_helo_host'] = smtp.get("helo_host", None)
+                if smtp.get("timeout", None):
+                    data['smtp_timeout'] = smtp.get("timeout", None)
+                if smtp.get("conn_options", None):
+                    data['smtp_conn_options'] = smtp.get("conn_options")
 
             oauth = config_data.get("oauth", None)
 
             if oauth:
-                pass
+                oauth_provider = oauth.get("provider", None)
+                oauth_provider_name = oauth.get("provider_name", None)
+                if oauth_provider and oauth_provider_name:
+                    data['oauth_provider'] = oauth_provider
+                    data['oauth_provider_name'] = oauth_provider_name
+                    if oauth.get("client_id", None):
+                        data['oauth_client_id'] = oauth.get("client_id", None)
+                    if oauth.get("client_secret", None):
+                        data['oauth_client_secret'] = oauth.get("client_secret", None)
+                    if oauth.get("auth_uri", None):
+                        data['oauth_auth_uri'] = oauth.get("auth_uri", None)
+                    if oauth.get("token_uri", None):
+                        data['oauth_token_uri'] = oauth.get("token_uri", None)
+                    if oauth.get("identity_uri", None):
+                        data['oauth_identity_uri'] = oauth.get("identity_uri", None)
+                    if oauth.get("verify_peer", None):
+                        data['oauth_verify_peer'] = oauth.get("verify_peer", None)
+                    if oauth.get("scope", None):
+                        data['oauth_scope'] = oauth.get("scope", None)
+                    if oauth.get("auth_parameters", None):
+                        data['oauth_auth_parameters'] = oauth.get("auth_parameters", None)
+                    if oauth.get("identity_fields", None):
+                        data['oauth_identity_fields'] = oauth.get("identity_fields", None)
+                    if oauth.get("login_redirect", None):
+                        data['oauth_login_redirect'] = oauth.get("login_redirect", None)
 
             ldap = config_data.get("ldap", None)
 
             if ldap:
-                pass
+                if ldap.get("cache", None) and ldap.get("cache", None) in ['db', 'apc', 'memcache', 'memcached']:
+                    data['ldap_cache'] = ldap.get("cache", None)
+                if ldap.get("cache_ttl", None):
+                    data['ldap_cache_ttl'] = ldap.get("cache_ttl", None)
 
             caches = config_data.get("caches", None)
 
             if caches:
-                pass
+                memcache = caches.get("memcache", {})
+                redis = caches.get("redis", {})
+                apc = caches.get("apc", {})
+
+                if memcache:
+
+                    if memcache.get("hosts", None):
+                        data["memcache_hosts"] = memcache.get("hosts")
+                    if memcache.get("pconnect", None):
+                        data["memcache_pconnect"] = memcache.get("pconnect")
+                    if memcache.get("timeout", None):
+                        data["memcache_timeout"] = memcache.get("timeout")
+                    if memcache.get("retry_interval", None):
+                        data["memcache_retry_interval"] = memcache.get("retry_interval")
+                    if memcache.get("max_allowed_packet", None):
+                        data["memcache_max_allowed_packet"] = memcache.get("max_allowed_packet")
+
+                if redis:
+                    if redis.get("hosts", None):
+                        data["redis_hosts"] = redis.get("hosts")
+                    if redis.get("max_allowed_packet", None):
+                        data["redis_max_allowed_packet"] = redis.get("max_allowed_packet")
+
+                if apc:
+                    if apc.get("max_allowed_packet", None):
+                        data["apc_max_allowed_packet"] = apc.get("max_allowed_packet")
 
             system = config_data.get("system", None)
 
@@ -274,44 +347,86 @@ class RoundcubeConfig(object):
 
         return data
 
-    def dict_to_php_array(self, d, indent=2):
+    def dict_to_php_array(self, d, indent=0):
         """
-            Funktion zum Erstellen eines PHP-Arrays
         """
-        self.module.log(f"dict_to_php_array(self, {d}, indent={indent})")
-
+        # self.module.log(f"dict_to_php_array(self, {d}, indent={indent})")
         php_array = "array(\n"
+        indent += 2
+
         for key, value in d.items():
-            """
-                self.module.log(f" - {value} / {type(value)}")
-            """
+            php_array += " " * indent
+            if isinstance(key, str):
+                php_array += f"'{key}' => "
+            else:
+                php_array += f"{key} => "
 
             if isinstance(value, dict):
-                php_array += f"{('  '*indent)}'{key}' => {self.dict_to_php_array(value, indent=indent+2)},\n"
-            elif isinstance(value, bool):
-                v = str(value).lower()
-                php_array += f"{('  '*indent)}'{key}' => {v},\n"
-            elif isinstance(value, int):
-                php_array += f"{('  '*indent)}'{key}' => {value},\n"
-            elif isinstance(value, list):
-                php_array += f"{('  '*indent)}'{key}' => array(\n"
-                for item in value:
-                    # self.module.log(f" - {item} / {type(item)}")
-                    if isinstance(item, dict):
-                        php_array += f"{('  '*indent)}{self.dict_to_php_array(item, indent=indent+2)},\n"
-                    elif isinstance(item, int):
-                        php_array += f"{('  '*indent)}{item},\n"
-                    elif isinstance(item, bool):
-                        php_array += f"{('  '*indent)}{str(item).lower()},\n"
-                    else:
-                        php_array += f"{('  '*indent)}'{item}',\n"
-                php_array += f"{('  '*indent)}),\n"
+                php_array += self.dict_to_php_array(value, indent) + ",\n"
             else:
-                php_array += f"{('  '*indent)}'{key}' => '{value}',\n"
+                # php_array += " " * (indent + 2)
+                if isinstance(value, bool):
+                    v = str(value).lower()
+                    php_array += f"{v},\n"
+                elif isinstance(value, int):
+                    php_array += f"{value},\n"
 
-        php_array += ")"
+                elif isinstance(value, list):
+                    php_array += "array(\n"
+                    for item in value:
+                        php_array += " " * (indent + 2)
+                        if isinstance(item, dict):
+                            php_array += self.dict_to_php_array(item, indent + 2) + ",\n"
+                        else:
+                            php_array += f"'{item}',\n"
+                    php_array += " " * indent + "),\n"
+                elif isinstance(value, str):
+                    php_array += f"'{value}',\n"
+                else:
+                    php_array += f"{value},\n"
+        indent -= 2
+        php_array += " " * indent + ")"
 
         return php_array
+
+    # def dict_to_php_array(self, d, indent=2):
+    #     """
+    #         Funktion zum Erstellen eines PHP-Arrays
+    #     """
+    #     self.module.log(f"dict_to_php_array(self, {d}, indent={indent})")
+    #
+    #     php_array = "array(\n"
+    #     for key, value in d.items():
+    #         """
+    #             self.module.log(f" - {value} / {type(value)}")
+    #         """
+    #
+    #         if isinstance(value, dict):
+    #             php_array += f"{('  '*indent)}'{key}' => {self.dict_to_php_array(value, indent=indent+2)},\n"
+    #         elif isinstance(value, bool):
+    #             v = str(value).lower()
+    #             php_array += f"{('  '*indent)}'{key}' => {v},\n"
+    #         elif isinstance(value, int):
+    #             php_array += f"{('  '*indent)}'{key}' => {value},\n"
+    #         elif isinstance(value, list):
+    #             php_array += f"{('  '*indent)}'{key}' => array(\n"
+    #             for item in value:
+    #                 # self.module.log(f" - {item} / {type(item)}")
+    #                 if isinstance(item, dict):
+    #                     php_array += f"{('  '*indent)}{self.dict_to_php_array(item, indent=indent+2)},\n"
+    #                 elif isinstance(item, int):
+    #                     php_array += f"{('  '*indent)}{item},\n"
+    #                 elif isinstance(item, bool):
+    #                     php_array += f"{('  '*indent)}{str(item).lower()},\n"
+    #                 else:
+    #                     php_array += f"{('  '*indent)}'{item}',\n"
+    #             php_array += f"{('  '*indent)}),\n"
+    #         else:
+    #             php_array += f"{('  '*indent)}'{key}' => '{value}',\n"
+    #
+    #     php_array += ")"
+    #
+    #     return php_array
 
     def __values_as_string(self, values):
         """
@@ -326,6 +441,19 @@ class RoundcubeConfig(object):
                 result[k] = str(v)
 
         self.module.log(msg=f"{json.dumps(result, indent=2, sort_keys=False)}")
+        return result
+
+    def valid_list_data(self, data, valid_entries):
+        """
+        """
+        result = []
+
+        if isinstance(data, list):
+            data.sort()
+            valid_entries.sort()
+            result = list(set(data).intersection(valid_entries))
+            result.sort()
+        # display.v(f"=result: {result}")
         return result
 
 
@@ -357,3 +485,13 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
+
+"""
+  auth_type = [x.upper() for x in auth_type]
+  auth_type = self.valid_list_data(auth_type, valid_entries=['DIGEST-MD5', 'CRAM-MD5', 'LOGIN', 'PLAIN'])
+  if auth_type:
+      data['smtp_auth_type'] = auth_type
+
+"""

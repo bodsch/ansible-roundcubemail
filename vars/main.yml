@@ -25,7 +25,7 @@ roundcube_packages: []
 
 roundcube_defaults_config:
   database:
-    dsnw: ""                                        # 'mysql://roundcube:@localhost/roundcubemail';
+    dsnw: ""                                        # 'mysql://roundcube:@localhost/roundcubemail'
     dsnr: ""                                        #
     dsnw_noread: ""                                 # false
     persistent: ""                                  # false
@@ -55,19 +55,12 @@ roundcube_defaults_config:
   imap:
     host: ""                                        # localhost:143
     auth_type: ""                                   # DIGEST-MD5, CRAM-MD5, LOGIN, PLAIN or null
-    conn_options:
-      ssl:
-        verify_peer: true
-        verify_depth: 3
-        cafile: /etc/openssl/certs/ca.crt
-
-    #  'ssl'         => [
-    #     'verify_peer'  => true,
-    #     'verify_depth' => 3,
-    #     'cafile'       => '/etc/openssl/certs/ca.crt',
-    #   ],
-    # conn_options: ""
-    timeout: 0
+    conn_options: {}
+    #   ssl:
+    #     verify_peer: true
+    #     verify_depth: 3
+    #     cafile: /etc/openssl/certs/ca.crt
+    timeout: ""                                     # 0
     auth_cid: ""
     auth_pw: ""
     delimiter: ""
@@ -88,7 +81,6 @@ roundcube_defaults_config:
     messages_cache_ttl: ""
     cache_ttl: 10d
     cache_threshold: 50
-
   smtp:
     host: 'localhost:587'
     user: '%u'
@@ -108,13 +100,62 @@ roundcube_defaults_config:
      #      ],
      #  ]
     conn_options:  null
+  oauth:
+    provider: null
+    provider_name: ''
+    client_id: null
+    client_secret: null
+    auth_uri: null
+    token_uri: null
+    identity_uri: null
+    verify_peer: true
+    scope: null
+    auth_parameters: []
+    identity_fields: null
+    login_redirect: false
+  ldap:
+    # Type of LDAP cache. Supported values: 'db', 'apc' and 'memcache' or 'memcached'.
+    cache: ''                                       # db
+    # Lifetime of LDAP cache. Possible units: s, m, h, d, w
+    cache_ttl: ""                                   # '10m'
+  caches:
+    memcache:
+      # Use these hosts for accessing memcached
+      # Define any number of hosts in the form of hostname:port or unix:///path/to/socket.file
+      # Example: ['localhost:11211', '192.168.1.12:11211', 'unix:///var/tmp/memcached.sock']
+      hosts: ""                                     # null
 
+      # Controls the use of a persistent connections to memcache servers
+      # See http://php.net/manual/en/memcache.addserver.php
+      pconnect: ""                                  # true
 
+      # Value in seconds which will be used for connecting to the daemon
+      # See http://php.net/manual/en/memcache.addserver.php
+      timeout: ""                                   # 1
 
+      # Controls how often a failed server will be retried (value in seconds).
+      # Setting this parameter to -1 disables automatic retry.
+      # See http://php.net/manual/en/memcache.addserver.php
+      retry_interval: ""                            # 15
+      # Maximum size of an object in memcache (in bytes). Default: 2MB
+      max_allowed_packet: ""                        # '2M'
+    redis:
+      # Use these hosts for accessing Redis.
+      # Currently only one host is supported. Cluster support may come in a future release.
+      # You can pass 4 fields, host, port (optional), database (optional) and password (optional).
+      # Unset fields will be set to the default values host=127.0.0.1, port=6379.
+      # Examples:
+      #     ['localhost:6379']
+      #     ['192.168.1.1:6379:1:secret']
+      #     ['unix:///var/run/redis/redis-server.sock:1:secret']
+      hosts: ""
 
-  oauth: {}
-  ldap: {}
-  caches: {}
+      # Maximum size of an object in Redis cache (in bytes). Default: 2MB
+      max_allowed_packet: ""                        # '2M'
+    apc:
+      # Maximum size of an object in APC cache (in bytes). Default: 2MB
+      max_allowed_packet: ""                        # '2M'
+
   system: {}
   plugins: {}
   ui: {}
