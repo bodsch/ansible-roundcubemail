@@ -20,33 +20,6 @@ class RoundcubeConfig(object):
     """
     module = None
 
-    # Beispiel für mehrdimensionale JSON-Daten
-    json_data = '''
-    {
-        "name": "Max",
-        "alter": 25,
-        "adresse": {
-            "straße": "Hauptstraße 1",
-            "stadt": "Berlin",
-            "plz": "10115"
-        },
-        "interessen": [
-            {
-                "name": "Programmieren",
-                "level": "fortgeschritten"
-            },
-            {
-                "name": "Musik",
-                "level": "Anfänger"
-            },
-            {
-                "name": "Reisen",
-                "level": "mittel"
-            }
-        ]
-    }
-    '''
-
     def __init__(self, module):
         """
 
@@ -84,10 +57,6 @@ class RoundcubeConfig(object):
             config_data = json.loads(self.config)
         else:
             config_data = self.config
-
-        # self.module.log(f"{type(config_data)}")
-        # config_data = self.__values_as_string(values=config_data)
-        # self.module.log(f"{type(config_data)}")
 
         if config_data:
             database = config_data.get("database", None)
@@ -321,27 +290,379 @@ class RoundcubeConfig(object):
             system = config_data.get("system", None)
 
             if system:
-                pass
+                if system.get("enable_installer"):
+                    data['enable_installer'] = system.get("enable_installer")
+                if system.get("dont_override"):
+                    data['dont_override'] = system.get("dont_override")
+                if system.get("disabled_actions"):
+                    data['disabled_actions'] = system.get("disabled_actions")
+                if system.get("advanced_prefs"):
+                    data['advanced_prefs'] = system.get("advanced_prefs")
+                if system.get("support_url"):
+                    data['support_url'] = system.get("support_url")
+                if system.get("blankpage_url"):
+                    data['blankpage_url'] = system.get("blankpage_url")
+                if system.get("skin_logo"):
+                    data['skin_logo'] = system.get("skin_logo")
+                if system.get("auto_create_user"):
+                    data['auto_create_user'] = system.get("auto_create_user")
+                if system.get("user_aliases"):
+                    data['user_aliases'] = system.get("user_aliases")
+                if system.get("log_dir"):
+                    data['log_dir'] = system.get("log_dir")
+                if system.get("temp_dir"):
+                    data['temp_dir'] = system.get("temp_dir")
+                if system.get("temp_dir_ttl"):
+                    data['temp_dir_ttl'] = system.get("temp_dir_ttl")
+                if system.get("force_https"):
+                    data['force_https'] = system.get("force_https")
+                if system.get("use_https"):
+                    data['use_https'] = system.get("use_https")
+                if system.get("login_autocomplete"):
+                    data['login_autocomplete'] = system.get("login_autocomplete")
+                if system.get("login_lc"):
+                    data['login_lc'] = system.get("login_lc")
+                if system.get("login_username_maxlen"):
+                    data['login_username_maxlen'] = system.get("login_username_maxlen")
+                if system.get("login_password_maxlen"):
+                    data['login_password_maxlen'] = system.get("login_password_maxlen")
+                if system.get("login_username_filter"):
+                    data['login_username_filter'] = system.get("login_username_filter")
+                if system.get("login_rate_limit"):
+                    data['login_rate_limit'] = system.get("login_rate_limit")
+                if system.get("skin_include_php"):
+                    data['skin_include_php'] = system.get("skin_include_php")
+                if system.get("display_product_info"):
+                    data['display_product_info'] = system.get("display_product_info")
+                if system.get("session_lifetime"):
+                    data['session_lifetime'] = system.get("session_lifetime")
+                if system.get("session_domain"):
+                    data['session_domain'] = system.get("session_domain")
+                if system.get("session_name"):
+                    data['session_name'] = system.get("session_name")
+                if system.get("session_auth_name"):
+                    data['session_auth_name'] = system.get("session_auth_name")
+                if system.get("session_path"):
+                    data['session_path'] = system.get("session_path")
+                if system.get("session_samesite"):
+                    data['session_samesite'] = system.get("session_samesite")
+                if system.get("session_storage"):
+                    data['session_storage'] = system.get("session_storage")
+                if system.get("proxy_whitelist"):
+                    data['proxy_whitelist'] = system.get("proxy_whitelist")
+                if system.get("trusted_host_patterns"):
+                    data['trusted_host_patterns'] = system.get("trusted_host_patterns")
+                if system.get("ip_check"):
+                    data['ip_check'] = system.get("ip_check")
+                if system.get("x_frame_options"):
+                    data['x_frame_options'] = system.get("x_frame_options")
+
+                if system.get("des_key"):
+                    data['des_key'] = system.get("des_key")
+                if system.get("cipher_method"):
+                    data['cipher_method'] = system.get("cipher_method")
+                if system.get("username_domain"):
+                    data['username_domain'] = system.get("username_domain")
+                if system.get("username_domain_forced"):
+                    data['username_domain_forced'] = system.get("username_domain_forced")
+                if system.get("mail_domain"):
+                    data['mail_domain'] = system.get("mail_domain")
+                if system.get("password_charset"):
+                    data['password_charset'] = system.get("password_charset")
+                if system.get("sendmail_delay"):
+                    data['sendmail_delay'] = system.get("sendmail_delay")
+                if system.get("max_message_size"):
+                    data['max_message_size'] = system.get("max_message_size")
+                if system.get("max_recipients"):
+                    data['max_recipients'] = system.get("max_recipients")
+                if system.get("max_disclosed_recipients"):
+                    data['max_disclosed_recipients'] = system.get("max_disclosed_recipients")
+                if system.get("max_group_members"):
+                    data['max_group_members'] = system.get("max_group_members")
+                if system.get("product_name"):
+                    data['product_name'] = system.get("product_name")
+                if system.get("useragent"):
+                    data['useragent'] = system.get("useragent")
+                if system.get("include_host_config"):
+                    data['include_host_config'] = system.get("include_host_config")
+                if system.get("generic_message_footer"):
+                    data['generic_message_footer'] = system.get("generic_message_footer")
+                if system.get("generic_message_footer_html"):
+                    data['generic_message_footer_html'] = system.get("generic_message_footer_html")
+                if system.get("http_received_header"):
+                    data['http_received_header'] = system.get("http_received_header")
+                if system.get("http_received_header_encrypt"):
+                    data['http_received_header_encrypt'] = system.get("http_received_header_encrypt")
+                if system.get("line_length"):
+                    data['line_length'] = system.get("line_length")
+                if system.get("send_format_flowed"):
+                    data['send_format_flowed'] = system.get("send_format_flowed")
+                if system.get("mdn_use_from"):
+                    data['mdn_use_from'] = system.get("mdn_use_from")
+                if system.get("identities_level"):
+                    data['identities_level'] = system.get("identities_level")
+                if system.get("identity_image_size"):
+                    data['identity_image_size'] = system.get("identity_image_size")
+                if system.get("response_image_size"):
+                    data['response_image_size'] = system.get("response_image_size")
+                if system.get("client_mimetypes"):
+                    data['client_mimetypes'] = system.get("client_mimetypes")
+                if system.get("mime_magic"):
+                    data['mime_magic'] = system.get("mime_magic")
+                if system.get("mime_types"):
+                    data['mime_types'] = system.get("mime_types")
+                if system.get("im_convert_path"):
+                    data['im_convert_path'] = system.get("im_convert_path")
+                if system.get("im_identify_path"):
+                    data['im_identify_path'] = system.get("im_identify_path")
+                if system.get("image_thumbnail_size"):
+                    data['image_thumbnail_size'] = system.get("image_thumbnail_size")
+                if system.get("contact_photo_size"):
+                    data['contact_photo_size'] = system.get("contact_photo_size")
+                if system.get("email_dns_check"):
+                    data['email_dns_check'] = system.get("email_dns_check")
+                if system.get("no_save_sent_messages"):
+                    data['no_save_sent_messages'] = system.get("no_save_sent_messages")
+                if system.get("use_secure_urls"):
+                    data['use_secure_urls'] = system.get("use_secure_urls")
+                if system.get("request_path"):
+                    data['request_path'] = system.get("request_path")
+                if system.get("assets_path"):
+                    data['assets_path'] = system.get("assets_path")
+                if system.get("assets_dir"):
+                    data['assets_dir'] = system.get("assets_dir")
+                if system.get("http_client"):
+                    data['http_client'] = system.get("http_client")
+                if system.get("subject_reply_prefixes"):
+                    data['subject_reply_prefixes'] = system.get("subject_reply_prefixes")
+                if system.get("subject_forward_prefixes"):
+                    data['subject_forward_prefixes'] = system.get("subject_forward_prefixes")
+                if system.get("response_prefix"):
+                    data['response_prefix'] = system.get("response_prefix")
+                if system.get("forward_prefix"):
+                    data['forward_prefix'] = system.get("forward_prefix")
 
             plugins = config_data.get("plugins", None)
 
             if plugins:
-                pass
+                if plugins.get("plugins"):
+                    data['plugins'] = plugins.get("plugins")
 
             ui = config_data.get("ui", None)
 
             if ui:
-                pass
+                if ui.get("message_sort_col"):
+                    data['message_sort_col'] = ui.get("message_sort_col")
+                if ui.get("message_sort_order"):
+                    data['message_sort_order'] = ui.get("message_sort_order")
+                if ui.get("list_cols"):
+                    data['list_cols'] = ui.get("list_cols")
+                if ui.get("language"):
+                    data['language'] = ui.get("language")
+                if ui.get("date_format"):
+                    data['date_format'] = ui.get("date_format")
+                if ui.get("date_formats"):
+                    data['date_formats'] = ui.get("date_formats")
+                if ui.get("time_format"):
+                    data['time_format'] = ui.get("time_format")
+                if ui.get("time_formats"):
+                    data['time_formats'] = ui.get("time_formats")
+                if ui.get("date_short"):
+                    data['date_short'] = ui.get("date_short")
+                if ui.get("date_long"):
+                    data['date_long'] = ui.get("date_long")
+                if ui.get("drafts_mbox"):
+                    data['drafts_mbox'] = ui.get("drafts_mbox")
+                if ui.get("junk_mbox"):
+                    data['junk_mbox'] = ui.get("junk_mbox")
+                if ui.get("sent_mbox"):
+                    data['sent_mbox'] = ui.get("sent_mbox")
+                if ui.get("trash_mbox"):
+                    data['trash_mbox'] = ui.get("trash_mbox")
+                if ui.get("create_default_folders"):
+                    data['create_default_folders'] = ui.get("create_default_folders")
+                if ui.get("protect_default_folders"):
+                    data['protect_default_folders'] = ui.get("protect_default_folders")
+                if ui.get("show_real_foldernames"):
+                    data['show_real_foldernames'] = ui.get("show_real_foldernames")
+                if ui.get("quota_zero_as_unlimited"):
+                    data['quota_zero_as_unlimited'] = ui.get("quota_zero_as_unlimited")
+                if ui.get("enable_spellcheck"):
+                    data['enable_spellcheck'] = ui.get("enable_spellcheck")
+                if ui.get("spellcheck_dictionary"):
+                    data['spellcheck_dictionary'] = ui.get("spellcheck_dictionary")
+                if ui.get("spellcheck_engine"):
+                    data['spellcheck_engine'] = ui.get("spellcheck_engine")
+                if ui.get("spellcheck_uri"):
+                    data['spellcheck_uri'] = ui.get("spellcheck_uri")
+                if ui.get("spellcheck_languages"):
+                    data['spellcheck_languages'] = ui.get("spellcheck_languages")
+                if ui.get("spellcheck_ignore_caps"):
+                    data['spellcheck_ignore_caps'] = ui.get("spellcheck_ignore_caps")
+                if ui.get("spellcheck_ignore_nums"):
+                    data['spellcheck_ignore_nums'] = ui.get("spellcheck_ignore_nums")
+                if ui.get("spellcheck_ignore_syms"):
+                    data['spellcheck_ignore_syms'] = ui.get("spellcheck_ignore_syms")
+                if ui.get("sig_max_lines"):
+                    data['sig_max_lines'] = ui.get("sig_max_lines")
+                if ui.get("max_pagesize"):
+                    data['max_pagesize'] = ui.get("max_pagesize")
+                if ui.get("min_refresh_interval"):
+                    data['min_refresh_interval'] = ui.get("min_refresh_interval")
+                if ui.get("undo_timeout"):
+                    data['undo_timeout'] = ui.get("undo_timeout")
+                if ui.get("compose_responses_static"):
+                    data['compose_responses_static'] = ui.get("compose_responses_static")
+                if ui.get("keyservers"):
+                    data['keyservers'] = ui.get("keyservers")
+                if ui.get("mailvelope_main_keyring"):
+                    data['mailvelope_main_keyring'] = ui.get("mailvelope_main_keyring")
+                if ui.get("mailvelope_keysize"):
+                    data['mailvelope_keysize'] = ui.get("mailvelope_keysize")
+                if ui.get("html2text_links"):
+                    data['html2text_links'] = ui.get("html2text_links")
+                if ui.get("html2text_width"):
+                    data['html2text_width'] = ui.get("html2text_width")
 
             addressbook = config_data.get("addressbook", None)
 
             if addressbook:
-                pass
+                if addressbook.get("type"):
+                    data['address_book_type'] = addressbook.get("type")
+                if addressbook.get("ldap_public"):
+                    data['ldap_public'] = addressbook.get("ldap_public")
+
+                autocomplete = addressbook.get("autocomplete")
+
+                if autocomplete:
+                    if autocomplete.get("addressbooks"):
+                        data['autocomplete_addressbooks'] = autocomplete.get("addressbooks")
+                    if autocomplete.get("min_length"):
+                        data['autocomplete_min_length'] = autocomplete.get("min_length")
+                    if autocomplete.get("threads"):
+                        data['autocomplete_threads'] = autocomplete.get("threads")
+                    if autocomplete.get("max"):
+                        data['autocomplete_max'] = autocomplete.get("max")
+                if addressbook.get("address_template"):
+                    data['address_template'] = addressbook.get("address_template")
+                if addressbook.get("search_mode"):
+                    data['addressbook_search_mode'] = addressbook.get("search_mode")
+                if addressbook.get("contactlist_fields"):
+                    data['contactlist_fields'] = addressbook.get("contactlist_fields")
+                if addressbook.get("contact_search_name"):
+                    data['contact_search_name'] = addressbook.get("contact_search_name")
+                if addressbook.get("contact_form_mode"):
+                    data['contact_form_mode'] = addressbook.get("contact_form_mode")
+                if addressbook.get("collected_recipients"):
+                    data['collected_recipients'] = addressbook.get("collected_recipients")
+                if addressbook.get("collected_senders"):
+                    data['collected_senders'] = addressbook.get("collected_senders")
 
             user_pref = config_data.get("user_pref", None)
 
             if user_pref:
-                pass
+                if user_pref.get("default_charset"):
+                    data['default_charset'] = user_pref.get("default_charset")
+                if user_pref.get("skin"):
+                    data['skin'] = user_pref.get("skin")
+                if user_pref.get("skins_allowed"):
+                    data['skins_allowed'] = user_pref.get("skins_allowed")
+                if user_pref.get("standard_windows"):
+                    data['standard_windows'] = user_pref.get("standard_windows")
+                if user_pref.get("mail_pagesize"):
+                    data['mail_pagesize'] = user_pref.get("mail_pagesize")
+                if user_pref.get("addressbook_pagesize"):
+                    data['addressbook_pagesize'] = user_pref.get("addressbook_pagesize")
+                if user_pref.get("addressbook_sort_col"):
+                    data['addressbook_sort_col'] = user_pref.get("addressbook_sort_col")
+                if user_pref.get("addressbook_name_listing"):
+                    data['addressbook_name_listing'] = user_pref.get("addressbook_name_listing")
+                if user_pref.get("timezone"):
+                    data['timezone'] = user_pref.get("timezone")
+                if user_pref.get("prefer_html"):
+                    data['prefer_html'] = user_pref.get("prefer_html")
+                if user_pref.get("show_images"):
+                    data['show_images'] = user_pref.get("show_images")
+                if user_pref.get("message_extwin"):
+                    data['message_extwin'] = user_pref.get("message_extwin")
+                if user_pref.get("compose_extwin"):
+                    data['compose_extwin'] = user_pref.get("compose_extwin")
+                if user_pref.get("htmleditor"):
+                    data['htmleditor'] = user_pref.get("htmleditor")
+                if user_pref.get("compose_save_localstorage"):
+                    data['compose_save_localstorage'] = user_pref.get("compose_save_localstorage")
+                if user_pref.get("prettydate"):
+                    data['prettydate'] = user_pref.get("prettydate")
+                if user_pref.get("draft_autosave"):
+                    data['draft_autosave'] = user_pref.get("draft_autosave")
+                if user_pref.get("layout"):
+                    data['layout'] = user_pref.get("layout")
+                if user_pref.get("mail_read_time"):
+                    data['mail_read_time'] = user_pref.get("mail_read_time")
+                if user_pref.get("logout_purge"):
+                    data['logout_purge'] = user_pref.get("logout_purge")
+                if user_pref.get("logout_expunge"):
+                    data['logout_expunge'] = user_pref.get("logout_expunge")
+                if user_pref.get("inline_images"):
+                    data['inline_images'] = user_pref.get("inline_images")
+                if user_pref.get("mime_param_folding"):
+                    data['mime_param_folding'] = user_pref.get("mime_param_folding")
+                if user_pref.get("skip_deleted"):
+                    data['skip_deleted'] = user_pref.get("skip_deleted")
+                if user_pref.get("read_when_deleted"):
+                    data['read_when_deleted'] = user_pref.get("read_when_deleted")
+                if user_pref.get("flag_for_deletion"):
+                    data['flag_for_deletion'] = user_pref.get("flag_for_deletion")
+                if user_pref.get("refresh_interval"):
+                    data['refresh_interval'] = user_pref.get("refresh_interval")
+                if user_pref.get("check_all_folders"):
+                    data['check_all_folders'] = user_pref.get("check_all_folders")
+                if user_pref.get("default_list_mode"):
+                    data['default_list_mode'] = user_pref.get("default_list_mode")
+                if user_pref.get("autoexpand_threads"):
+                    data['autoexpand_threads'] = user_pref.get("autoexpand_threads")
+                if user_pref.get("reply_mode"):
+                    data['reply_mode'] = user_pref.get("reply_mode")
+                if user_pref.get("strip_existing_sig"):
+                    data['strip_existing_sig'] = user_pref.get("strip_existing_sig")
+                if user_pref.get("show_sig"):
+                    data['show_sig'] = user_pref.get("show_sig")
+                if user_pref.get("sig_below"):
+                    data['sig_below'] = user_pref.get("sig_below")
+                if user_pref.get("sig_separator"):
+                    data['sig_separator'] = user_pref.get("sig_separator")
+                if user_pref.get("force_7bit"):
+                    data['force_7bit'] = user_pref.get("force_7bit")
+                if user_pref.get("search_mods"):
+                    data['search_mods'] = user_pref.get("search_mods")
+                if user_pref.get("addressbook_search_mods"):
+                    data['addressbook_search_mods'] = user_pref.get("addressbook_search_mods")
+                if user_pref.get("delete_junk"):
+                    data['delete_junk'] = user_pref.get("delete_junk")
+                if user_pref.get("mdn_requests"):
+                    data['mdn_requests'] = user_pref.get("mdn_requests")
+                if user_pref.get("mdn_default"):
+                    data['mdn_default'] = user_pref.get("mdn_default")
+                if user_pref.get("dsn_default"):
+                    data['dsn_default'] = user_pref.get("dsn_default")
+                if user_pref.get("reply_same_folder"):
+                    data['reply_same_folder'] = user_pref.get("reply_same_folder")
+                if user_pref.get("forward_attachment"):
+                    data['forward_attachment'] = user_pref.get("forward_attachment")
+                if user_pref.get("default_addressbook"):
+                    data['default_addressbook'] = user_pref.get("default_addressbook")
+                if user_pref.get("spellcheck_before_send"):
+                    data['spellcheck_before_send'] = user_pref.get("spellcheck_before_send")
+                if user_pref.get("autocomplete_single"):
+                    data['autocomplete_single'] = user_pref.get("autocomplete_single")
+                if user_pref.get("default_font"):
+                    data['default_font'] = user_pref.get("default_font")
+                if user_pref.get("default_font_size"):
+                    data['default_font_size'] = user_pref.get("default_font_size")
+                if user_pref.get("message_show_email"):
+                    data['message_show_email'] = user_pref.get("message_show_email")
+                if user_pref.get("reply_all_mode"):
+                    data['reply_all_mode'] = user_pref.get("reply_all_mode")
 
         self.module.log(f"{type(data)}")
 
@@ -388,45 +709,6 @@ class RoundcubeConfig(object):
         php_array += " " * indent + ")"
 
         return php_array
-
-    # def dict_to_php_array(self, d, indent=2):
-    #     """
-    #         Funktion zum Erstellen eines PHP-Arrays
-    #     """
-    #     self.module.log(f"dict_to_php_array(self, {d}, indent={indent})")
-    #
-    #     php_array = "array(\n"
-    #     for key, value in d.items():
-    #         """
-    #             self.module.log(f" - {value} / {type(value)}")
-    #         """
-    #
-    #         if isinstance(value, dict):
-    #             php_array += f"{('  '*indent)}'{key}' => {self.dict_to_php_array(value, indent=indent+2)},\n"
-    #         elif isinstance(value, bool):
-    #             v = str(value).lower()
-    #             php_array += f"{('  '*indent)}'{key}' => {v},\n"
-    #         elif isinstance(value, int):
-    #             php_array += f"{('  '*indent)}'{key}' => {value},\n"
-    #         elif isinstance(value, list):
-    #             php_array += f"{('  '*indent)}'{key}' => array(\n"
-    #             for item in value:
-    #                 # self.module.log(f" - {item} / {type(item)}")
-    #                 if isinstance(item, dict):
-    #                     php_array += f"{('  '*indent)}{self.dict_to_php_array(item, indent=indent+2)},\n"
-    #                 elif isinstance(item, int):
-    #                     php_array += f"{('  '*indent)}{item},\n"
-    #                 elif isinstance(item, bool):
-    #                     php_array += f"{('  '*indent)}{str(item).lower()},\n"
-    #                 else:
-    #                     php_array += f"{('  '*indent)}'{item}',\n"
-    #             php_array += f"{('  '*indent)}),\n"
-    #         else:
-    #             php_array += f"{('  '*indent)}'{key}' => '{value}',\n"
-    #
-    #     php_array += ")"
-    #
-    #     return php_array
 
     def __values_as_string(self, values):
         """
@@ -485,7 +767,6 @@ def main():
 
 if __name__ == '__main__':
     main()
-
 
 
 """
