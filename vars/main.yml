@@ -183,7 +183,7 @@ roundcube_defaults_config:
     # - URL relative to the document root of this Roundcube installation
     # - full URL with http:# or https:# prefix
     # - URL relative to the current skin folder (when starts with a '/')
-    //
+    #
     # An array can be used to specify different logos for specific template files
     # The array key specifies the place(s) the logo should be applied to and
     # is made up of (up to) 3 parts:
@@ -195,7 +195,7 @@ roundcube_defaults_config:
     #      '[small]' for small screen logo in supported skins
     #      '[dark]' and '[small-dark]' for dark mode logo in supported skins
     #      '[link]' for adding a URL link to the logo image
-    //
+    #
     # Example config for skin_logo
     #
     #   [
@@ -224,7 +224,7 @@ roundcube_defaults_config:
     # Set to false if only registered users should be allowed to the webmail.
     # Note: If disabled you have to create records in Roundcube users table by yourself.
     # Note: Roundcube does not manage/create users on a mail server.
-    auto_create_user: true
+    auto_create_user: false
 
     # Enables possibility to log in using email address from user identities
     user_aliases: false
@@ -254,29 +254,34 @@ roundcube_defaults_config:
     # this option is mutually exclusive to 'force_https' and only either one of them should be set to true.
     use_https: false
 
-    # Allow browser-autocompletion on login form.
-    # 0 - disabled, 1 - username and host only, 2 - username, host, password
-    login_autocomplete: 0
+    login:
+      # Allow browser-autocompletion on login form.
+      # 0 - disabled,
+      # 1 - username and host only,
+      # 2 - username, host, password
+      autocomplete: 0
 
-    # Forces conversion of logins to lower case.
-    # 0 - disabled, 1 - only domain part, 2 - domain and local part.
-    # If users authentication is case-insensitive this must be enabled.
-    # Note: After enabling it all user records need to be updated, e.g. with query:
-    #       UPDATE users SET username = LOWER(username)
-    login_lc: 2
+      # Forces conversion of logins to lower case.
+      # 0 - disabled,
+      # 1 - only domain part,
+      # 2 - domain and local part.
+      # If users authentication is case-insensitive this must be enabled.
+      # Note: After enabling it all user records need to be updated, e.g. with query:
+      #       UPDATE users SET username = LOWER(username)
+      lower_case: 2
 
-    # Maximum length (in bytes) of logon username and password.
-    login_username_maxlen: 1024
-    login_password_maxlen: 1024
+      # Maximum length (in bytes) of logon username and password.
+      username_maxlen: 1024
+      password_maxlen: 1024
 
-    # Logon username filter. Regular expression for use with preg_match().
-    # Use special value 'email' if you accept only full email addresses as user logins.
-    # Example: '/^[a-z0-9_@.-]+$/'
-    login_username_filter: null
+      # Logon username filter. Regular expression for use with preg_match().
+      # Use special value 'email' if you accept only full email addresses as user logins.
+      # Example: '/^[a-z0-9_@.-]+$/'
+      username_filter: null
 
-    # Brute-force attacks prevention.
-    # The value specifies maximum number of failed logon attempts per minute.
-    login_rate_limit: 3
+      # Brute-force attacks prevention.
+      # The value specifies maximum number of failed logon attempts per minute.
+      rate_limit: 3
 
     # Includes should be interpreted as PHP files
     skin_include_php: false
@@ -285,37 +290,38 @@ roundcube_defaults_config:
     # 0 - hide product name and version number, 1 - show product name only, 2 - show product name and version number
     display_product_info: 1
 
-    # Session lifetime in minutes
-    session_lifetime: 10
+    session:
+      # Session lifetime in minutes
+      lifetime: 10
 
-    # Session domain: .example.org
-    session_domain: ''
+      # Session domain: .example.org
+      domain: ''
 
-    # Session name. Default: 'roundcube_sessid'
-    session_name: null
+      # Session name. Default: 'roundcube_sessid'
+      name: null
 
-    # Session authentication cookie name. Default: 'roundcube_sessauth'
-    session_auth_name: null
+      # Session authentication cookie name. Default: 'roundcube_sessauth'
+      auth_name: null
 
-    # Session path. Defaults to PHP session.cookie_path setting.
-    session_path: null
+      # Session path. Defaults to PHP session.cookie_path setting.
+      path: null
 
-    # Session samesite. Defaults to PHP session.cookie_samesite setting.
-    # Requires PHP >= 7.3.0, see https://wiki.php.net/rfc/same-site-cookie for more info
-    # Possible values: null (default), 'Lax', or 'Strict'
-    session_samesite: null
+      # Session samesite. Defaults to PHP session.cookie_samesite setting.
+      # Requires PHP >= 7.3.0, see https://wiki.php.net/rfc/same-site-cookie for more info
+      # Possible values: null (default), 'Lax', or 'Strict'
+      samesite: null
 
-    # Backend to use for session storage. Can either be 'db' (default), 'redis', 'memcache', or 'php'
-    //
-    # If set to 'memcache' or 'memcached', a list of servers need to be specified in 'memcache_hosts'
-    # Make sure the Memcache extension (https://pecl.php.net/package/memcache) version >= 2.0.0
-    # or the Memcached extension (https://pecl.php.net/package/memcached) version >= 2.0.0 is installed.
-    //
-    # If set to 'redis', a server needs to be specified in 'redis_hosts'
-    # Make sure the Redis extension (https://pecl.php.net/package/redis) version >= 2.0.0 is installed.
-    //
-    # Setting this value to 'php' will use the default session save handler configured in PHP
-    session_storage: 'db'
+      # Backend to use for session storage. Can either be 'db' (default), 'redis', 'memcache', or 'php'
+      #
+      # If set to 'memcache' or 'memcached', a list of servers need to be specified in 'memcache_hosts'
+      # Make sure the Memcache extension (https://pecl.php.net/package/memcache) version >= 2.0.0
+      # or the Memcached extension (https://pecl.php.net/package/memcached) version >= 2.0.0 is installed.
+      #
+      # If set to 'redis', a server needs to be specified in 'redis_hosts'
+      # Make sure the Redis extension (https://pecl.php.net/package/redis) version >= 2.0.0 is installed.
+      #
+      # Setting this value to 'php' will use the default session save handler configured in PHP
+      storage: 'db'
 
     # List of trusted proxies
     # X_FORWARDED_* and X_REAL_IP headers are only accepted from these IPs
@@ -530,11 +536,14 @@ roundcube_defaults_config:
 
     # List of supported subject prefixes for a message reply
     # This list is used to clean the subject when replying or sorting messages
-    subject_reply_prefixes: ['Re:']
+    subject_reply_prefixes:
+      - 'Re:'
 
     # List of supported subject prefixes for a message forward
     # This list is used to clean the subject when forwarding or sorting messages
-    subject_forward_prefixes: ['Fwd:', 'Fw:']
+    subject_forward_prefixes:
+      - 'Fwd:'
+      - 'Fw:'
 
     # Prefix to use in subject when replying to a message
     response_prefix: 'Re:'
@@ -560,7 +569,14 @@ roundcube_defaults_config:
 
     # These cols are shown in the message list. Available cols are:
     # subject, from, to, fromto, cc, replyto, date, size, status, flag, attachment, priority
-    list_cols: ['subject', 'status', 'fromto', 'date', 'size', 'flag', 'attachment']
+    list_cols:
+      - 'subject'
+      - 'status'
+      - 'fromto'
+      - 'date'
+      - 'size'
+      - 'flag'
+      - 'attachment'
 
     # the default locale setting (leave empty for auto-detection)
     # RFC1766 formatted language name like en_US, de_DE, de_CH, fr_FR, pt_BR
@@ -711,15 +727,15 @@ roundcube_defaults_config:
 
     # If you are going to use LDAP for individual address books, you will need to
     # set 'user_specific' to true and use the variables to generate the appropriate DNs to access it.
-    //
+    #
     # The recommended directory structure for LDAP is to store all the address book entries
     # under the users main entry, e.g.:
-    //
+    #
     #  o=root
     #   ou=people
     #    uid=user@domain
     #  mail=contact@contactdomain
-    //
+    #
     # So the base_dn would be uid=%fu,ou=people,o=root
     # The bind_dn would be the same as based_dn or some super user login.
 

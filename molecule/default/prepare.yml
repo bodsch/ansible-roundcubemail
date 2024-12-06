@@ -45,4 +45,5 @@
   gather_facts: true
 
   roles:
-    - role: bodsch.core.syslog_ng
+    # - role: bodsch.core.syslog_ng
+    # - role: php-fpm

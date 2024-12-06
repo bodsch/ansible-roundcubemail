@@ -113,26 +113,4 @@
       ansible.builtin.fail:
         msg: A serious error occurred when downloading the archive.
 
-# - name: detect extracted binary
-#   become: false
-#   delegate_to: "{{ roundcube_delegate_to }}"
-#   run_once: "{{ 'false' if roundcube_direct_download else 'true' }}"
-#   ansible.builtin.stat:
-#     path: "{{ roundcube_local_tmp_directory }}/{{ roundcube_release.binary }}"
-#   register: stat_roundcube_binary
-#
-# - name: extract roundcube archive
-#   become: false
-#   delegate_to: "{{ roundcube_delegate_to }}"
-#   run_once: "{{ 'false' if roundcube_direct_download else 'true' }}"
-#   ansible.builtin.unarchive:
-#     src: "{{ roundcube_local_tmp_directory }}/{{ roundcube_release.file }}"
-#     dest: "{{ roundcube_local_tmp_directory }}/"
-#     copy: false
-#     extra_opts:
-#       - --strip-components=1
-#   when:
-#     - stat_roundcube_binary.stat is defined
-#     - not stat_roundcube_binary.stat.exists | default('false')
-
 ...

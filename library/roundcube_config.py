@@ -5,11 +5,15 @@
 
 from __future__ import print_function
 
-# import os
-# import re
+import os
+import pwd
+import grp
 import json
+import shutil
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible_collections.bodsch.core.plugins.module_utils.directory import create_directory
+from ansible_collections.bodsch.core.plugins.module_utils.checksum import Checksum
 
 __metaclass__ = type
 
@@ -28,6 +32,12 @@ class RoundcubeConfig(object):
         self.config = self.module.params.get("config")
         self.config_path = self.module.params.get("config_path")
 
+        self.rc_config_file = f"{self.config_path}/config.inc.php"
+        self.cache_directory = "/var/cache/ansible/roundcube"
+
+        pid = os.getpid()
+        self.tmp_directory = os.path.join("/run/.ansible", f"roundcube.{str(pid)}")
+
     def run(self):
         """
 
@@ -35,10 +45,67 @@ class RoundcubeConfig(object):
         # self.module.log(msg=f"search into: {self.config_path}")
         # self.module.log(f"{type(self.config)}")
 
+        checksum = Checksum(self.module)
+
         data = self.config_opts()
 
         # PHP Array generieren
         php_output = "<?php\n$config = " + self.dict_to_php_array(data) + ";\n?>"
+
+
+        create_directory(directory=self.tmp_directory, mode="0750")
+        tmp_file = os.path.join(self.tmp_directory, "config.inc.php")
+
+        self.__write_config(tmp_file, php_output)
+
+        new_checksum = checksum.checksum_from_file(tmp_file)
+        old_checksum = checksum.checksum_from_file(self.rc_config_file)
+
+        changed = not (new_checksum == old_checksum)
+        new_file = False
+        msg = "The configuration has not been changed."
+
+        self.module.log(f" tmp_file      : {tmp_file}")
+        self.module.log(f" config_file   : {self.rc_config_file}")
+        self.module.log(f" changed       : {changed}")
+        self.module.log(f" new_checksum  : {new_checksum}")
+        self.module.log(f" old_checksum  : {old_checksum}")
+
+        if changed:
+            new_file = (old_checksum is None)
+            _config_backup = os.path.join(self.config_path, f"config.inc.{os.getpid()}.bck")
+
+            # if self.diff_output:
+            #     difference = self.create_diff(self.ansible_json_file, data)
+            #     _diff = difference
+
+            # create backup of existing config
+            if os.path.exists(self.rc_config_file):
+                shutil.copyfile(self.rc_config_file, _config_backup)
+
+            shutil.copyfile(tmp_file, self.rc_config_file)
+
+            msg = "The configuration has been successfully updated."
+
+        if new_file:
+            msg = "The configuration was successfully created."
+
+        # uid, gid = self.module.user_and_group(self.rc_config_file)
+        #
+        # # self.module.log(f" uid {uid} / gid {gid}")
+        #
+        # self.__fix_ownership(self.rc_config_file, self.owner, self.group, "0666")
+
+
+        shutil.rmtree(self.tmp_directory)
+
+        return dict(
+            changed=changed,
+            failed=False,
+            msg=msg,
+        )
+
+
 
         self.module.log(php_output)
 
@@ -318,36 +385,51 @@ class RoundcubeConfig(object):
                     data['force_https'] = system.get("force_https")
                 if system.get("use_https"):
                     data['use_https'] = system.get("use_https")
-                if system.get("login_autocomplete"):
-                    data['login_autocomplete'] = system.get("login_autocomplete")
-                if system.get("login_lc"):
-                    data['login_lc'] = system.get("login_lc")
-                if system.get("login_username_maxlen"):
-                    data['login_username_maxlen'] = system.get("login_username_maxlen")
-                if system.get("login_password_maxlen"):
-                    data['login_password_maxlen'] = system.get("login_password_maxlen")
-                if system.get("login_username_filter"):
-                    data['login_username_filter'] = system.get("login_username_filter")
-                if system.get("login_rate_limit"):
-                    data['login_rate_limit'] = system.get("login_rate_limit")
+
+                system_login = system.get("login", {})
+
+                if system_login:
+                    autocomplete = system_login.get("autocomplete", 0)
+                    lower_case = system_login.get("lower_case", 0)
+
+                    if autocomplete and autocomplete in ['0', '1', '2']:
+                        data['login_autocomplete'] = autocomplete
+                    if lower_case and lower_case in ['0', '1', '2']:
+                        data['login_lc'] = lower_case
+                    if system_login.get("username_maxlen"):
+                        data['login_username_maxlen'] = system_login.get("username_maxlen")
+                    if system_login.get("password_maxlen"):
+                        data['login_password_maxlen'] = system_login.get("password_maxlen")
+                    if system_login.get("username_filter"):
+                        data['login_username_filter'] = system_login.get("username_filter")
+                    if system_login.get("rate_limit"):
+                        data['login_rate_limit'] = system_login.get("rate_limit")
+
                 if system.get("skin_include_php"):
                     data['skin_include_php'] = system.get("skin_include_php")
                 if system.get("display_product_info"):
                     data['display_product_info'] = system.get("display_product_info")
-                if system.get("session_lifetime"):
-                    data['session_lifetime'] = system.get("session_lifetime")
-                if system.get("session_domain"):
-                    data['session_domain'] = system.get("session_domain")
-                if system.get("session_name"):
-                    data['session_name'] = system.get("session_name")
-                if system.get("session_auth_name"):
-                    data['session_auth_name'] = system.get("session_auth_name")
-                if system.get("session_path"):
-                    data['session_path'] = system.get("session_path")
-                if system.get("session_samesite"):
-                    data['session_samesite'] = system.get("session_samesite")
-                if system.get("session_storage"):
-                    data['session_storage'] = system.get("session_storage")
+
+                system_session = system.get("session", {})
+
+                if system_session:
+                    if system.get("lifetime"):
+                        data['session_lifetime'] = system.get("lifetime")
+                    if system.get("session"):
+                        data['session_domain'] = system.get("domain")
+                    if system.get("name"):
+                        data['session_name'] = system.get("name")
+                    if system.get("auth_name"):
+                        data['session_auth_name'] = system.get("auth_name")
+                    if system.get("path"):
+                        data['session_path'] = system.get("path")
+                    if system.get("samesite"):
+                        data['session_samesite'] = system.get("samesite")
+
+                    session_storage = system.get("storage", 'db')
+                    if session_storage and session_storage in ['db', 'redis', 'memcache', 'php']:
+                        data['session_storage'] = system.get("storage")
+
                 if system.get("proxy_whitelist"):
                     data['proxy_whitelist'] = system.get("proxy_whitelist")
                 if system.get("trusted_host_patterns"):
@@ -356,7 +438,6 @@ class RoundcubeConfig(object):
                     data['ip_check'] = system.get("ip_check")
                 if system.get("x_frame_options"):
                     data['x_frame_options'] = system.get("x_frame_options")
-
                 if system.get("des_key"):
                     data['des_key'] = system.get("des_key")
                 if system.get("cipher_method"):
@@ -399,14 +480,19 @@ class RoundcubeConfig(object):
                     data['send_format_flowed'] = system.get("send_format_flowed")
                 if system.get("mdn_use_from"):
                     data['mdn_use_from'] = system.get("mdn_use_from")
-                if system.get("identities_level"):
-                    data['identities_level'] = system.get("identities_level")
+
+                identities_level = system.get("identities_level")
+                if identities_level and identities_level in ['0', '1', '2', '3', '4']:
+                    data['identities_level'] = identities_level
+
                 if system.get("identity_image_size"):
                     data['identity_image_size'] = system.get("identity_image_size")
                 if system.get("response_image_size"):
                     data['response_image_size'] = system.get("response_image_size")
-                if system.get("client_mimetypes"):
-                    data['client_mimetypes'] = system.get("client_mimetypes")
+
+                client_mimetypes = system.get("client_mimetypes", [])
+                if client_mimetypes:
+                    data['client_mimetypes'] = ",".join(client_mimetypes)
                 if system.get("mime_magic"):
                     data['mime_magic'] = system.get("mime_magic")
                 if system.get("mime_types"):
@@ -487,22 +573,27 @@ class RoundcubeConfig(object):
                     data['show_real_foldernames'] = ui.get("show_real_foldernames")
                 if ui.get("quota_zero_as_unlimited"):
                     data['quota_zero_as_unlimited'] = ui.get("quota_zero_as_unlimited")
-                if ui.get("enable_spellcheck"):
-                    data['enable_spellcheck'] = ui.get("enable_spellcheck")
-                if ui.get("spellcheck_dictionary"):
-                    data['spellcheck_dictionary'] = ui.get("spellcheck_dictionary")
-                if ui.get("spellcheck_engine"):
-                    data['spellcheck_engine'] = ui.get("spellcheck_engine")
-                if ui.get("spellcheck_uri"):
-                    data['spellcheck_uri'] = ui.get("spellcheck_uri")
-                if ui.get("spellcheck_languages"):
-                    data['spellcheck_languages'] = ui.get("spellcheck_languages")
-                if ui.get("spellcheck_ignore_caps"):
-                    data['spellcheck_ignore_caps'] = ui.get("spellcheck_ignore_caps")
-                if ui.get("spellcheck_ignore_nums"):
-                    data['spellcheck_ignore_nums'] = ui.get("spellcheck_ignore_nums")
-                if ui.get("spellcheck_ignore_syms"):
-                    data['spellcheck_ignore_syms'] = ui.get("spellcheck_ignore_syms")
+
+                spellcheck = ui.get("spellcheck")
+                if spellcheck:
+                    spellcheck_enabled = spellcheck.get("enable", False)
+                    if spellcheck_enabled:
+                        data['enable_spellcheck'] = True
+                        if spellcheck.get("spellcheck_dictionary"):
+                            data['spellcheck_dictionary'] = spellcheck.get("dictionary")
+                        if spellcheck.get("engine"):
+                            data['spellcheck_engine'] = spellcheck.get("engine")
+                        if spellcheck.get("uri"):
+                            data['spellcheck_uri'] = spellcheck.get("uri")
+                        if spellcheck.get("languages"):
+                            data['spellcheck_languages'] = spellcheck.get("languages")
+                        if spellcheck.get("ignore_caps"):
+                            data['spellcheck_ignore_caps'] = spellcheck.get("ignore_caps")
+                        if spellcheck.get("ignore_nums"):
+                            data['spellcheck_ignore_nums'] = spellcheck.get("ignore_nums")
+                        if spellcheck.get("ignore_syms"):
+                            data['spellcheck_ignore_syms'] = spellcheck.get("ignore_syms")
+
                 if ui.get("sig_max_lines"):
                     data['sig_max_lines'] = ui.get("sig_max_lines")
                 if ui.get("max_pagesize"):
@@ -519,8 +610,10 @@ class RoundcubeConfig(object):
                     data['mailvelope_main_keyring'] = ui.get("mailvelope_main_keyring")
                 if ui.get("mailvelope_keysize"):
                     data['mailvelope_keysize'] = ui.get("mailvelope_keysize")
-                if ui.get("html2text_links"):
-                    data['html2text_links'] = ui.get("html2text_links")
+
+                html2text_links = ui.get("html2text_links", 1)
+                if html2text_links and html2text_links in ['0', '1', '2']:
+                    data['html2text_links'] = html2text_links
                 if ui.get("html2text_width"):
                     data['html2text_width'] = ui.get("html2text_width")
 
@@ -724,6 +817,106 @@ class RoundcubeConfig(object):
 
         self.module.log(msg=f"{json.dumps(result, indent=2, sort_keys=False)}")
         return result
+
+
+    def __write_config(self, file_name, data):
+        """
+        """
+        with open(file_name, 'w') as fp:
+            # json_data = json.dumps(data, indent=2, sort_keys=False)
+            fp.write(f'{data}\n')
+
+
+    def __file_state(self, file_name):
+        """
+        """
+        current_owner = None
+        current_group = None
+        current_mode = None
+
+        if os.path.exists(file_name):
+            _state = os.stat(file_name)
+            try:
+                current_owner = pwd.getpwuid(_state.st_uid).pw_uid
+            except KeyError:
+                pass
+
+            try:
+                current_group = grp.getgrgid(_state.st_gid).gr_gid
+            except KeyError:
+                pass
+
+            try:
+                current_mode = oct(_state.st_mode)[-4:]
+            except KeyError:
+                pass
+
+        return current_owner, current_group, current_mode
+
+    def __fix_ownership(self, file_name, force_owner=None, force_group=None, force_mode=False):
+        """
+        """
+        changed = False
+        error_msg = None
+
+        if os.path.exists(file_name):
+            current_owner, current_group, current_mode = self.__file_state(file_name)
+
+            # change mode
+            if force_mode is not None and force_mode != current_mode:
+                try:
+                    if isinstance(force_mode, int):
+                        mode = int(str(force_mode), base=8)
+                except Exception as e:
+                    error_msg = f" - ERROR '{e}'"
+                    print(error_msg)
+
+                try:
+                    if isinstance(force_mode, str):
+                        mode = int(force_mode, base=8)
+                except Exception as e:
+                    error_msg = f" - ERROR '{e}'"
+                    print(error_msg)
+
+                os.chmod(file_name, mode)
+
+            # change ownership
+            if force_owner is not None or force_group is not None and (force_owner != current_owner or force_group != current_group):
+                if force_owner is not None:
+                    try:
+                        force_owner = pwd.getpwnam(str(force_owner)).pw_uid
+                    except KeyError:
+                        force_owner = int(force_owner)
+                        pass
+                elif current_owner is not None:
+                    force_owner = current_owner
+                else:
+                    force_owner = 0
+
+                if force_group is not None:
+                    try:
+                        force_group = grp.getgrnam(str(force_group)).gr_gid
+                    except KeyError:
+                        force_group = int(force_group)
+                        pass
+                elif current_group is not None:
+                    force_group = current_group
+                else:
+                    force_group = 0
+
+                os.chown(
+                    file_name,
+                    int(force_owner),
+                    int(force_group)
+                )
+
+            _owner, _group, _mode = self.__file_state(file_name)
+
+            if (current_owner != _owner) or (current_group != _group) or (current_mode != _mode):
+                changed = True
+
+        return changed, error_msg
+
 
     def valid_list_data(self, data, valid_entries):
         """

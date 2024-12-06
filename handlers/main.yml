@@ -5,6 +5,8 @@
     name: "{{ roundcube_php_daemon.name }}"
     state: restarted
   when:
+    - php_fpm_daemon is defined
+    - ansible_local.php.version is defined
     - roundcube_php_daemon.restart
 
 ...
